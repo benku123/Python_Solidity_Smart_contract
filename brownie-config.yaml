@@ -1,0 +1,15 @@
+dotenv: .env
+
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@3.4.0
+compiler:
+  solc:
+    remappings:
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@3.4.0"
+
+wallets:
+  from_key: ${PRIVATE_KEY}
+
+networks:
+  sepolia:
+    host: "https://sepolia.infura.io/v3/${WEB3_INFURA_PROJECT_ID}"
