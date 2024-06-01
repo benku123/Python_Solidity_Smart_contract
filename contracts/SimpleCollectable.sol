@@ -6,36 +6,38 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract SimpleCollectable is ERC721, Ownable {
     uint256 public tokenCounter;
-    uint256 public price;
+    mapping(uint256 => uint256) public tokenPrices;
 
-    constructor(uint256 _price) public ERC721("SimpleCollectable", "SC") {
+    event CollectableCreated(uint256 indexed tokenId, string tokenURI, address indexed owner, uint256 price);
+
+    constructor() public ERC721("SimpleCollectable", "SC") {
         tokenCounter = 0;
-        price = _price;
     }
 
-    function createCollectable(string memory tokenURI) public onlyOwner returns (uint256) {
+    function createCollectable(string memory tokenURI, uint256 price) public onlyOwner returns (uint256) {
         uint256 newItemId = tokenCounter;
         _safeMint(msg.sender, newItemId);
         _setTokenURI(newItemId, tokenURI);
+        tokenPrices[newItemId] = price;
         tokenCounter = tokenCounter + 1;
+        emit CollectableCreated(newItemId, tokenURI, msg.sender, price);
         return newItemId;
     }
 
-    function buyCollectable(string memory tokenURI) public payable returns (uint256) {
-        require(msg.value >= price, "Not enough Ether to buy the NFT");
-        uint256 newItemId = tokenCounter;
-        _safeMint(msg.sender, newItemId);
-        _setTokenURI(newItemId, tokenURI);
-        tokenCounter = tokenCounter + 1;
-        return newItemId;
+    function buyCollectable(uint256 tokenId) public payable {
+        require(msg.value >= tokenPrices[tokenId], "Not enough Ether to buy the NFT");
+        address owner = ownerOf(tokenId);
+        _transfer(owner, msg.sender, tokenId);
+        payable(owner).transfer(msg.value);
+        emit CollectableCreated(tokenId, tokenURI(tokenId), msg.sender, tokenPrices[tokenId]);
     }
 
     function withdraw() public onlyOwner {
         uint256 balance = address(this).balance;
-        msg.sender.transfer(balance);
+        payable(msg.sender).transfer(balance);
     }
 
-    function setPrice(uint256 _price) public onlyOwner {
-        price = _price;
+    function setPrice(uint256 tokenId, uint256 price) public onlyOwner {
+        tokenPrices[tokenId] = price;
     }
 }
