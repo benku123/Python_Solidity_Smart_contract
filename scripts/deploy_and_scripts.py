@@ -1,24 +1,25 @@
-from .helpful_scripts import get_account
-from brownie import SimpleCollectable
+from brownie import SimpleCollectable, accounts,config
+import json
 
 sample_token_uri = "ipfs://Qmd9MCGtdVz2miNumBHDbvj8bigSgTwnr4SbyH6DNnpWdt?filename=0-PUG.json"
 
-import json
-
 def main():
-    account = get_account()
+    # Load your account from the private key
+    account = accounts.add(config['wallets']['from_key'])
     initial_price = 1000
 
-
+    # Deploy the SimpleCollectable contract
     simple_collectible = SimpleCollectable.deploy({"from": account})
+    print(f"Contract deployed at address: {simple_collectible.address}")
 
-    tx = simple_collectible.createCollectable(sample_token_uri, initial_price, {"from": account})
-    tx.wait(1)
-    print(f"Minted token. Transaction hash: {tx.txid}")
 
+    # Save contract address to a file
     with open('contract_address.txt', 'w') as f:
         f.write(simple_collectible.address)
 
-    # Save contract ABI
+    # Save contract ABI to a file
+    abi = simple_collectible.abi
     with open('contract_abi.json', 'w') as f:
-        json.dump(simple_collectible.abi, f)
+        json.dump(abi, f)
+
+    print("Contract address and ABI saved.")
